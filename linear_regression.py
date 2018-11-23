@@ -10,7 +10,6 @@ def get_thetas():
 	try:
 		with open(theta_file, 'r') as f:
 			thetas = [float(line.rstrip('\n')) for line in f]
-			print(thetas)
 			if len(thetas) != 2 or \
 			isinstance(thetas[0], (int, float)) is False or \
 			isinstance(thetas[1], (int, float)) is False :
