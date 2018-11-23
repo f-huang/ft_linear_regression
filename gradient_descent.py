@@ -3,6 +3,9 @@
 
 import sys
 import csv
+import matplotlib.pyplot as plt
+import numpy as np
+
 
 def get_dataset(path):
 	try:
@@ -28,50 +31,55 @@ def save_thetas(thetas):
 		sys.exit(-1)
 
 
-def mean(numbers):
-	return float(sum(numbers) / max(len(numbers), 1))
-
-
-def estimate_price(theta0, theta1, x):
-	return theta0 + theta1 * x;
-
-
 def normalize_dataset(map):
-	mean_x = mean(map)
-	mean_y = mean(map.values())
-	range_x = (max(map) - min(map))
-	range_y = (max(map.values()) - min(map.values()))
 	return {(x) / max(map) : (y) / max(map.values()) for x, y in map.items()}
 
 
-def unnormalize_theta_0(map, theta0):
-	return theta0 * max(map.values())
+def unnormalize(map, thetas):
+	maximum = max(map.values())
+	return thetas[0] * maximum,  thetas[1] * maximum / max(map)
 
 
-def unnormalize_theta_1(map, theta1):
-	return theta1 * max(map.values()) / max(map)
+def show_graph(dataset, thetas, equation):
+	plt.scatter(*zip(*sorted(dataset.items())))
+	plt.title("Price of a car depending on its mileage")
+	plt.xlabel("mileage(km)")
+	plt.ylabel("price(€)")
+	plt.axis([0, max(dataset) + 10000, 0, max(dataset.values()) + 1000])
+	x = np.linspace(min(dataset) - 1000, max(dataset) + 10000)
+	y = equation(thetas[1], thetas[0])(x)
+	plt.plot(x, y,\
+		color='#FF0000', \
+		label='{:.3f}x + {:.3f}'.format(thetas[1], thetas[0]) \
+	)
+	plt.legend(loc="best")
+	plt.show()
+
+
+def get_linear_function(a, b):
+	def f(x):
+		return (a * x + b)
+	return f
+
+
+def distance(map, g):
+	return float(sum(g(km, price) for km, price in map.items())) / len(map)
 
 
 def train(map):
-	theta0 = 0
-	theta1 = 0
-	learningRate = 1.5
-	m = len(map)
-	i = 0
-	while i < 500:
-		tmp_theta0 = (learningRate * sum(
-			estimate_price(theta0, theta1, km) - price
-			for km, price in map.items())) / m
-		tmp_theta1 = (learningRate * sum(
-			(estimate_price(theta0, theta1, km) - price) * km
-			for km, price in map.items())) / m
-		if abs(theta1 - theta1 - tmp_theta1) < 10e-11:
+	thetas, learningRate = [0.0, 0.0], 1.5
+	i, cost = 0, 100
+	while i < 1000:
+		f = get_linear_function(thetas[1], thetas[0])
+		thetas[0] -= learningRate * distance(map, lambda km, price: f(km) - price)
+		thetas[1] -= learningRate * distance(map, lambda km, price: (f(km) - price) * km)
+		old_cost = cost
+		cost = distance(map, lambda km, price: (f(km) - price)**2)
+		if abs(old_cost - cost) < 10e-11:
 			break
-		theta0 -= tmp_theta0
-		theta1 -= tmp_theta1
 		i += 1
 	print(i)
-	return theta0, theta1
+	return thetas
 
 
 if __name__ == "__main__":
@@ -81,8 +89,7 @@ if __name__ == "__main__":
 	path = sys.argv[1]
 	dataset = get_dataset(path)
 	map = normalize_dataset(dataset)
-	thetas = train(map)
-	thetas = unnormalize_theta_0(dataset, thetas[0]), \
-		unnormalize_theta_1(dataset, thetas[1])
+	thetas = unnormalize(dataset, train(map))
 	print(thetas)
 	save_thetas(thetas)
+	show_graph(dataset, thetas, get_linear_function)
