@@ -24,9 +24,13 @@ def estimate(theta0, theta1, x):
 	return theta0 + (theta1 * x)
 
 if __name__ == "__main__":
+	print("To quit, just write 'quit'.\n")
 	while (1):
 		try:
-			mileage = int(input("Enter a mileage: "), 10)
+			user_entry = input("Enter a mileage: ")
+			if user_entry == 'quit':
+				break
+			mileage = int(user_entry, 10)
 			if mileage <= 0:
 				print("Enter a positive mileage")
 			else:

@@ -78,7 +78,6 @@ def train(map):
 		if abs(old_cost - cost) < 10e-11:
 			break
 		i += 1
-	print(i)
 	return thetas
 
 
@@ -90,6 +89,5 @@ if __name__ == "__main__":
 	dataset = get_dataset(path)
 	map = normalize_dataset(dataset)
 	thetas = unnormalize(dataset, train(map))
-	print(thetas)
 	save_thetas(thetas)
 	show_graph(dataset, thetas, get_linear_function)
